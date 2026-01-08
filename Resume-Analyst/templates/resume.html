@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Analysis Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-color: #161b22;
+            --border-color: #30363d;
+            --text-color: #c9d1d9;
+            --text-color-secondary: #8b949e;
+            --accent-color: #58a6ff;
+            --accent-color-hover: #79c0ff;
+            --ai-color: #a371f7;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .header-card {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn-upload {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: inline-block;
+        }
+
+        .btn-upload:hover {
+            background-color: var(--accent-color-hover);
+        }
+
+        #fileNameDisplay {
+            font-size: 14px;
+            color: var(--text-color-secondary);
+        }
+
+        /* --- LOADING SPINNER CSS (NEW) --- */
+        #loadingSpinner {
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 15px;
+            color: var(--text-color);
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .loading-subtext {
+            margin-top: 5px;
+            color: var(--text-color-secondary);
+            font-size: 13px;
+        }
+
+        /* New grid layout for better organization */
+        .top-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .middle-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .full-width-section {
+            width: 100%;
+        }
+
+        .info-card {
+            background-color: var(--card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        
+        .ai-card {
+            background-color: #1a1625;
+            border: 1px solid #6e40c9;
+            box-shadow: 0 0 15px rgba(163, 113, 247, 0.1);
+        }
+
+        .info-card h3 {
+            margin-top: 0;
+            color: var(--accent-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .ai-card h3 {
+            color: var(--ai-color);
+            border-bottom: 1px solid #6e40c9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prediction-display {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .prediction-display .label {
+            font-size: 16px;
+            color: var(--text-color-secondary);
+            margin-bottom: 5px;
+        }
+
+        .prediction-display .value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #38bdae;
+        }
+
+        .info-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .info-list li {
+            background-color: rgba(88, 166, 255, 0.1);
+            color: var(--accent-color-hover);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .contact-info p {
+            margin: 8px 0;
+            font-size: 15px;
+        }
+
+        .contact-info strong {
+            color: var(--text-color-secondary);
+            margin-right: 8px;
+            display: inline-block;
+            width: 60px;
+        }
+
+        #categoryChart {
+            max-height: 350px;
+        }
+
+        .job-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 15px;
+        }
+
+        .job-list li {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 4px;
+        }
+
+        .job-list .job-name {
+            font-weight: 500;
+            color: #60a5fa;
+        }
+
+        .job-list .job-score {
+            color: #8b949e;
+            font-size: 0.9em;
+        }
+
+        .message {
+            text-align: center;
+            padding: 15px;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .message-error {
+            background-color: #2c1f1f;
+            color: #f87171;
+            border: 1px solid #492323;
+        }
+        
+        .ai-content {
+            line-height: 1.6;
+            color: #e0d4fc;
+        }
+
+        .ai-content strong, .ai-content b {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* Responsive design */
+        @media (max-width: 968px) {
+            .top-section,
+            .middle-section {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Header with Upload Form -->
+        <div class="header-card">
+            <h1>Resume Analysis Report</h1>
+            <!-- Added id="uploadForm" for JS targeting -->
+            <form action="/predict" method="post" enctype="multipart/form-data" id="uploadForm">
+                <label for="resumeFile" class="btn-upload">
+                    Choose Resume File (PDF or TXT)
+                </label>
+                <input type="file" id="resumeFile" name="resume" onchange="displayFileName(this)">
+                <span id="fileNameDisplay"></span>
+                <button type="submit" class="btn-upload" style="background-color: #2da44e;">Analyze Resume</button>
+            </form>
+
+            <!-- LOADING SPINNER (NEW) -->
+            <div id="loadingSpinner">
+                <div class="spinner"></div>
+                <div class="loading-text">Analyzing Resume...</div>
+                <div class="loading-subtext">Fetching AI Career Advice from Gemini</div>
+            </div>
+
+            {% if message %}
+                <p class="message message-error">{{ message }}</p>
+            {% endif %}
+        </div>
+
+        {% if predicted_category %}
+        
+        <!-- Top Section: Candidate Info & Predicted Category -->
+        <div class="top-section">
+            <div class="info-card">
+                <h3>📋 Candidate Information</h3>
+                <div class="contact-info">
+                    <p><strong>Name:</strong> {{ name | default('Not Found') }}</p>
+                    <p><strong>Email:</strong> {{ email | default('Not Found') }}</p>
+                    <p><strong>Phone:</strong> {{ phone | default('Not Found') }}</p>
+                </div>
+            </div>
+
+            <div class="info-card prediction-display">
+                <div class="label">Predicted Resume Category</div>
+                <div class="value">{{ predicted_category }}</div>
+            </div>
+        </div>
+
+        <!-- Middle Section: Job Recommendations & Category Confidence -->
+        <div class="middle-section">
+            <div class="info-card">
+                <h3>💼 Top Job Recommendations</h3>
+                {% if recommended_job is not string and recommended_job is iterable %}
+                    <ul class="job-list">
+                        {% for job, score in recommended_job %}
+                        <li>
+                            <span class="job-name">{{ job }}</span>
+                            <span class="job-score">{{ "%.1f"|format(score * 100) }}%</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p style="color: var(--text-color-secondary); text-align: center;">{{ recommended_job | default('N/A') }}</p>
+                {% endif %}
+            </div>
+
+            <div class="info-card">
+                <h3>📊 Category Confidence</h3>
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Skills Section -->
+        <div class="full-width-section">
+            <div class="info-card">
+                <h3>🛠️ Technical Skills</h3>
+                {% if extracted_skills %}
+                <ul class="info-list">
+                    {% for skill in extracted_skills %}
+                    <li>{{ skill }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p style="color: var(--text-color-secondary); text-align: center;">No skills found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Education Section -->
+        <div class="full-width-section">
+            <div class="info-card">
+                <h3>🎓 Education</h3>
+                {% if extracted_education %}
+                <ul class="info-list" style="flex-direction: column; gap: 10px;">
+                    {% for edu in extracted_education %}
+                    <li style="background-color: rgba(88, 166, 255, 0.05); padding: 10px 15px; border-radius: 6px;">{{ edu }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p style="color: var(--text-color-secondary); text-align: center;">No education found.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- AI Career Coach - Last Section -->
+        {% if ai_advice %}
+        <div class="full-width-section">
+            <div class="info-card ai-card">
+                <h3>✨ AI Career Coach</h3>
+                <div class="ai-content">
+                    {{ ai_advice | replace('\n', '<br>') | safe }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% endif %}
+    </div>
+
+    <script>
+        function displayFileName(input) {
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            if (input.files.length > 0) {
+                fileNameDisplay.textContent = 'Uploaded: ' + input.files[0].name;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        }
+
+        // --- NEW: Handle Form Submit to Show Loader ---
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            const fileInput = document.getElementById('resumeFile');
+            if(fileInput.files.length > 0) {
+                // Show the spinner
+                document.getElementById('loadingSpinner').style.display = 'flex';
+                
+                // Disable the button to prevent multiple clicks
+                const btn = document.querySelector('.btn-upload[type="submit"]');
+                btn.style.opacity = '0.5';
+                btn.style.pointerEvents = 'none';
+                btn.textContent = 'Analyzing...';
+            }
+        });
+
+        {% if category_data %}
+            const chartData = {{ category_data | tojson | safe }};
+        {% else %}
+            const chartData = null;
+        {% endif %}
+
+        if (chartData) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: 'Confidence Score (%)',
+                        data: chartData.scores,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true, 
+                            max: 100, 
+                            ticks: { color: '#dddddd' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            title: { display: true, text: 'Confidence (%)', color: '#8b949e' }
+                        },
+                        y: { 
+                            ticks: { color: '#dddddd' }, 
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' } 
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

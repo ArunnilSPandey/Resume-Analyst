@@ -1,0 +1,8 @@
+Flask
+PyPDF2
+scikit-learn==1.6.1
+pandas
+numpy
+google-generativeai
+xgboost
+python-dotenv
