@@ -1,6 +1,7 @@
 # Resume-Analyst 🚀
 
 Resume-Analyst is a Flask-based web application that uses Machine Learning and AI to analyze resumes. It identifies job categories, recommends roles, extracts contact information, and provides personalized career roadmaps using Google Gemini AI.
+Try yourslef :- https://huggingface.co/spaces/arunnil/Resume-Analyst
 
 ## Features ✨
 
